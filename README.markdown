@@ -1,7 +1,9 @@
 # keymaster.js
 
-Keymaster is a simple (100 LoC or so) micro-library for defining and
-dispatching keyboard shortcuts. It has no dependencies.
+Keymaster is a simple micro-library for defining and
+dispatching keyboard shortcuts in web applications.
+
+It has no dependencies.
 
 *It’s a work in progress (e.g. beta), so spare me your nerdrage and instead
 contribute! Patches are welcome, but they are not guaranteed to make
@@ -9,19 +11,23 @@ it in.*
 
 ## Usage
 
-Include `keymaster.min.js` in your web app, by loading it as usual:
+Include `keymaster.js` in your web app*, by loading it as usual:
 
 ```html
-<script src="keymaster.min.js"></script>
+<script src="keymaster.js"></script>
 ```
 
 Keymaster has no dependencies and can be used completely standalone.
 It should not interfere with any JavaScript libraries or frameworks.
 
+_*Preferably use a minified version that fits your workflow. You can
+run `make` to have UglifyJS (if you have it installed) create a
+`keymaster.min.js` file for you._
+
 ## Defining shortcuts
 
 One global method is exposed, `key` which defines shortcuts when
-called directly. 
+called directly.
 
 ```javascript
 // define short of 'a'
@@ -48,6 +54,7 @@ key('⌘+r, ctrl+r', function(event, handler){
 // "ctrl+r", "all"
 ```
 
+
 ## Supported keys
 
 Keymaster understands the following modifiers:
@@ -57,6 +64,7 @@ The following special keys can be used for shortcuts:
 `backspace`, `tab`, `clear`, `enter`, `return`, `esc`, `escape`, `space`,
 `up`, `down`, `left`, `right`, `home`, `end`, `pageup`, `pagedown`, `del`, `delete`
 and `f1` through `f19`.
+
 
 ## Modifier key queries
 
@@ -69,16 +77,17 @@ allows easy implementation of things like shift+click handlers. For example,
 if(key.shift) alert('shift is pressed, OMGZ!');
 ```
 
+
 ## Other key queries
 
 At any point in time (even in code other than key shortcut handlers),
 you can query the `key` object for the state of any key. This
 is very helpful for game development using a game loop. For example,
-`key.isDown(77)` is `true` if the M key is currently pressed.
+`key.isPressed(77)` is `true` if the M key is currently pressed.
 
 ```javascript
-if(key.isDown("M")) alert('M key is pressed, can ya believe it!?');
-if(key.isDown(77)) alert('M key is pressed, can ya believe it!?');
+if(key.isPressed("M")) alert('M key is pressed, can ya believe it!?');
+if(key.isPressed(77)) alert('M key is pressed, can ya believe it!?');
 ```
 
 You can also get these as an array using...
@@ -89,7 +98,7 @@ key.getPressedKeyCodes() // returns an array of key codes currently pressed
 
 ## Scopes
 
-If you want to reuse the same shortcut for seperate areas in your single page app,
+If you want to reuse the same shortcut for separate areas in your single page app,
 Keymaster supports switching between scopes. Use the `key.setScope` method to set scope.
 
 ```javascript
@@ -101,7 +110,8 @@ key('o, enter', 'files', function(){ /* do something else */ });
 key.setScope('issues'); // default scope is 'all'
 ```
 
-## Filter key presses 
+
+## Filter key presses
 
 By default, when an `INPUT`, `SELECT` or `TEXTAREA` element is focused, Keymaster doesn't process any shortcuts.
 
@@ -119,9 +129,21 @@ function filter(event){
 }
 ```
 
-If you only want _some_ shortcuts to work while in a input element, you change the scope in the 
-key.filter function; however a more robust way to handle this is to use proper
+If you only want _some_ shortcuts to work while in an input element, you can change the scope in the
+`key.filter` function. Here's an example implementation, setting the scope to either `'input'` or `'other'`.
+Don't forget to return `true` so the any shortcuts get processed.
+
+```javascript
+key.filter = function(event){
+  var tagName = (event.target || event.srcElement).tagName;
+  key.setScope(/^(INPUT|TEXTAREA|SELECT)$/.test(tagName) ? 'input' : 'other');
+  return true;
+}
+```
+
+However a more robust way to handle this is to use proper
 focus and blur event handlers on your input element, and change scopes there as you see fit.
+
 
 ## noConflict mode
 
@@ -135,12 +157,29 @@ key()
 // --> TypeError: 'undefined' is not a function
 ```
 
+
+## Unbinding shortcuts
+
+Similar to defining shortcuts, they can be unbound using `key.unbind`.
+
+```javascript
+// unbind 'a' handler
+key.unbind('a');
+
+// unbind a key only for a single scope
+// when no scope is specified it defaults to the current scope (key.getScope())
+key.unbind('o, enter', 'issues');
+key.unbind('o, enter', 'files');
+```
+
+
 ## Notes
 
 Keymaster should work with any browser that fires `keyup` and `keydown` events,
 and is tested with IE (6+), Safari, Firefox and Chrome.
 
 See [http://madrobby.github.com/keymaster/](http://madrobby.github.com/keymaster/) for a live demo.
+
 
 ## CoffeeScript
 
@@ -159,19 +198,6 @@ key 'o, enter', 'issues', ->
 alert 'shift is pressed, OMGZ!' if key.shift
 ```
 
-## Ender support
-
-Add `keymaster` as a top level method to your [Ender](http://ender.no.de) compilation.
-
-    $ ender add keymaster
-
-Use it:
-
-``` js
-$.key('⌘+r', function () {
-  alert('reload!')
-})
-```
 
 ## Contributing
 
@@ -182,5 +208,5 @@ submit a pull request.
 
 * Finish test suite
 
-Keymaster is (c) 2011-2012 Thomas Fuchs and may be freely distributed under the MIT license.
+Keymaster is (c) 2011-2013 Thomas Fuchs and may be freely distributed under the MIT license.
 See the `MIT-LICENSE` file.
